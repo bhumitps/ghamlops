@@ -6,25 +6,21 @@ import pandas as pd
 # -----------------------------
 # CONFIG
 # -----------------------------
+DATASET_PATH = "tourism.csv" 
 HF_DATASET_REPO = "bhumitps/tourism_dataset"
 HF_TOKEN = os.getenv("HF_TOKEN")
 
 if HF_TOKEN is None:
     raise ValueError("HF_TOKEN not found in environment variables")
 
-# Base dir of tourism_project (one level up from this file)
-THIS_DIR = os.path.dirname(os.path.abspath(__file__))          # tourism_project/model_building
-BASE_DIR = os.path.dirname(THIS_DIR)                           # tourism_project
-DATASET_PATH = os.path.join(BASE_DIR, "tourism.csv")           # tourism_project/tourism.csv
-
-print(f"Current working directory: {os.getcwd()}")
-print(f"Resolved DATASET_PATH: {DATASET_PATH}")
-
 # -----------------------------
 # LOAD DATASET
 # -----------------------------
+print("Current working directory:", os.getcwd())
+print("Looking for dataset at:", os.path.abspath(DATASET_PATH))
+
 if not os.path.exists(DATASET_PATH):
-    raise FileNotFoundError(f"Dataset not found at: {DATASET_PATH}")
+    raise FileNotFoundError(f"Dataset not found at: {os.path.abspath(DATASET_PATH)}")
 
 df = pd.read_csv(DATASET_PATH)
 print("Dataset loaded successfully!")
@@ -47,7 +43,7 @@ except RepositoryNotFoundError:
         repo_id=HF_DATASET_REPO,
         repo_type="dataset",
         private=False,
-        exist_ok=True,
+        exist_ok=True
     )
 
 # -----------------------------
