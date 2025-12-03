@@ -6,7 +6,7 @@ import pandas as pd
 # -----------------------------
 # CONFIG
 # -----------------------------
-DATASET_PATH = "tourism.csv" 
+DATASET_PATH = "tourism.csv"
 HF_DATASET_REPO = "bhumitps/tourism_dataset"
 HF_TOKEN = os.getenv("HF_TOKEN")
 
