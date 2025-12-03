@@ -22,7 +22,8 @@ from huggingface_hub.utils import RepositoryNotFoundError, HfHubHTTPError
 # -----------------------------
 # CONFIG
 # -----------------------------
-PROCESSED_DIR = "tourism_project/processed_data"
+
+PROCESSED_DIR = "tourism_project/data"
 
 XTRAIN_PATH = os.path.join(PROCESSED_DIR, "xtrain.csv")
 XTEST_PATH  = os.path.join(PROCESSED_DIR, "xtest.csv")
@@ -141,7 +142,7 @@ def train_and_log():
         mlflow.log_metric("test_tn", int(cm[0, 0]))
         mlflow.log_metric("test_fn", int(cm[1, 0]))
 
-        # Log model to MLflow
+        # Log model to MLflow (raw XGBoost part)
         mlflow.xgboost.log_model(
             xgb_model=model_pipeline.named_steps["model"],
             artifact_path="xgb_model_raw"
@@ -181,7 +182,7 @@ def upload_model_to_hf(model_path: str):
         repo_type="model",
     )
 
-    print(" Model uploaded to Hugging Face model repo:", MODEL_REPO_ID)
+    print("Model uploaded to Hugging Face model repo:", MODEL_REPO_ID)
 
 
 if __name__ == "__main__":
