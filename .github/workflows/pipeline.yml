@@ -24,7 +24,6 @@ jobs:
           pip install --upgrade pip
           pip install -r tourism_project/requirements.txt
 
-      # run inside tourism_project
       - name: Register dataset on Hugging Face
         working-directory: tourism_project
         env:
@@ -51,7 +50,6 @@ jobs:
           pip install --upgrade pip
           pip install -r tourism_project/requirements.txt
 
-      # run inside tourism_project
       - name: Run data preparation
         working-directory: tourism_project
         env:
@@ -78,12 +76,14 @@ jobs:
           pip install --upgrade pip
           pip install -r tourism_project/requirements.txt
 
-      # Training runs from repo root
       - name: Train model and upload to HF model hub
+        working-directory: tourism_project
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
-          python tourism_project/model_building/train.py
+          # Re-run data prep in this job so data/*.csv exist here too
+          python model_building/data_prep.py
+          python model_building/train.py
 
 
   deploy-hosting:
@@ -104,7 +104,6 @@ jobs:
           pip install --upgrade pip
           pip install -r tourism_project/requirements.txt
 
-      # Hosting deploy
       - name: Deploy app artifacts to Hugging Face Space
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
