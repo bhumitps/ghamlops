@@ -23,6 +23,7 @@ if not HF_TOKEN:
 
 
 def main():
+    # 1. Download dataset from HF
     local_path = hf_hub_download(
         repo_id=HF_DATASET_REPO,
         repo_type="dataset",
@@ -32,16 +33,33 @@ def main():
 
     df = pd.read_csv(local_path)
     print("Dataset downloaded from HF:", local_path)
-    print("Shape:", df.shape)
+    print("Original shape:", df.shape)
 
+    # 2. Basic cleaning
     df = df.drop_duplicates().reset_index(drop=True)
 
+    # 3. Drop ID / index-like columns that should not be used as features
+    cols_to_drop = ["CustomerID"]  # known ID column
+    # Drop any "Unnamed: *" columns (often index columns from CSV)
+    unnamed_cols = [c for c in df.columns if c.startswith("Unnamed")]
+    cols_to_drop += unnamed_cols
+
+    cols_to_drop = [c for c in cols_to_drop if c in df.columns]
+    if cols_to_drop:
+        print("Dropping non-feature columns:", cols_to_drop)
+        df = df.drop(columns=cols_to_drop)
+
+    # 4. Split features / target
     if TARGET_COL not in df.columns:
         raise ValueError(f"Target column '{TARGET_COL}' not found in dataset.")
 
     y = df[TARGET_COL]
     X = df.drop(columns=[TARGET_COL])
 
+    print("Shape after dropping cols & target:")
+    print("X shape:", X.shape, "y shape:", y.shape)
+
+    # 5. Encode categorical columns
     cat_cols = X.select_dtypes(include=["object", "category"]).columns.tolist()
     if cat_cols:
         print("Encoding categorical columns:", cat_cols)
@@ -49,10 +67,12 @@ def main():
             le = LabelEncoder()
             X[col] = le.fit_transform(X[col].astype(str))
 
+    # 6. Train / test split
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, test_size=0.2, random_state=42, stratify=y
     )
 
+    # 7. Save to CSVs for training job
     xtrain_path = os.path.join(PROCESSED_DIR, "xtrain.csv")
     xtest_path  = os.path.join(PROCESSED_DIR, "xtest.csv")
     ytrain_path = os.path.join(PROCESSED_DIR, "ytrain.csv")
