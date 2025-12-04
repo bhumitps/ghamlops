@@ -4,20 +4,26 @@ import joblib
 
 from huggingface_hub import hf_hub_download
 
-
 MODEL_REPO_ID = "bhumitps/tourism_model"
-MODEL_FILENAME = "best_tourism_model_v1.joblib"
+MODEL_FILENAME = "best_tourism_model_v2.joblib"
 
 
 @st.cache_resource
 def load_model():
-    model_path = hf_hub_download(
-        repo_id=MODEL_REPO_ID,
-        filename=MODEL_FILENAME,
-        repo_type="model",
-    )
-    model = joblib.load(model_path)
-    return model
+    st.write("Loading model from Hugging Face Hub...")  # simple log in UI
+    try:
+        model_path = hf_hub_download(
+            repo_id=MODEL_REPO_ID,
+            filename=MODEL_FILENAME,
+            repo_type="model",
+            force_download=True,
+        )
+        model = joblib.load(model_path)
+        st.write("Model loaded successfully.")
+        return model
+    except Exception as e:
+        st.error(f"Error loading model: {e}")
+        raise
 
 
 model = load_model()
@@ -60,7 +66,6 @@ with col2:
 st.markdown("---")
 
 if st.button("Predict"):
-    # Build a single-row DataFrame. Column names must match training features.
     input_data = pd.DataFrame([{
         "Age": Age,
         "TypeofContact": TypeofContact,
@@ -82,8 +87,6 @@ if st.button("Predict"):
         "MonthlyIncome": MonthlyIncome,
     }])
 
-    # The training pipeline (data_prep + train.py) used label encoding and scaling.
-    # This app relies on the model pipeline's own preprocessing, so we pass raw values.
     pred_proba = model.predict_proba(input_data)[0][1]
     pred_label = model.predict(input_data)[0]
 
