@@ -12,4 +12,4 @@ COPY . /app
 
 EXPOSE 7860
 
-CMD streamlit run app.py --server.port=$PORT --server.address=0.0.0.0
+CMD ["sh", "-c", "unset STREAMLIT_SERVER_PORT; streamlit run app.py --server.port=$PORT --server.address=0.0.0.0"]
