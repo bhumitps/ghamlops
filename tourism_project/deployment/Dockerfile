@@ -12,4 +12,4 @@ COPY . /app
 
 EXPOSE 7860
 
-CMD ["sh", "-c", "unset STREAMLIT_SERVER_PORT; streamlit run app.py --server.port=$PORT --server.address=0.0.0.0"]
+CMD ["sh", "-c", "echo '--- ENV DUMP START ---'; env | sort; echo '--- ENV DUMP END ---'; streamlit run app.py --server.port=7860 --server.address=0.0.0.0"]
