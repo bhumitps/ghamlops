@@ -137,7 +137,7 @@ def train_and_log():
             artifact_path="xgb_model_raw"
         )
 
-        model_path = "best_tourism_model_v1.joblib"
+        model_path = "best_tourism_model_v2.joblib"
         joblib.dump(model_pipeline, model_path)
         print(f"\nSaved full pipeline to {model_path}")
 
