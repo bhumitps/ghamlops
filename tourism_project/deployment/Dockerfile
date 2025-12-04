@@ -1,21 +1,19 @@
-# Use a lightweight Python image
+# Lightweight Python base image
 FROM python:3.11-slim
 
-# Set working directory inside the container
+ENV PYTHONUNBUFFERED=1 \
+    HF_HUB_DISABLE_TELEMETRY=1
+
 WORKDIR /app
 
-# Copy requirements into the image
 COPY requirements.txt .
 
-# Install dependencies
 RUN pip install --upgrade pip \
-    && pip install -r requirements.txt
+    && pip install --no-cache-dir -r requirements.txt
 
-# Copy the rest of the app code
 COPY . .
 
-# Expose the default Hugging Face Space port
+ENV PORT=7860
 EXPOSE 7860
 
-# Run Streamlit app
-CMD ["streamlit", "run", "app.py", "--server.port=7860", "--server.address=0.0.0.0"]
+CMD ["bash", "-c", "streamlit run app.py --server.port=$PORT --server.address=0.0.0.0 --server.headless=true"]
