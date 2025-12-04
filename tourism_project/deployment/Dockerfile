@@ -15,13 +15,8 @@ RUN pip install --no-cache-dir --upgrade pip \
 # Copy the rest of the app (app.py, etc.)
 COPY . /app
 
-# Hugging Face Docker Spaces expose port 7860; we listen on it directly
+# Expose the Streamlit port
 EXPOSE 7860
 
-# Start Streamlit directly (no bash, use exec form)
-CMD ["streamlit", "run", "app.py",
-     "--server.port=7860",
-     "--server.address=0.0.0.0",
-     "--server.headless=true",
-     "--server.enableCORS=false",
-     "--server.enableXsrfProtection=false"]
+# Start Streamlit directly (exec form, single line to avoid parse issues)
+CMD ["streamlit", "run", "app.py", "--server.port=7860", "--server.address=0.0.0.0", "--server.headless=true", "--server.enableCORS=false", "--server.enableXsrfProtection=false"]
