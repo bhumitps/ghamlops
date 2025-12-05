@@ -4,7 +4,6 @@ import numpy as np
 
 from huggingface_hub import hf_hub_download
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import LabelEncoder
 
 # -----------------------------
 # CONFIG
@@ -40,7 +39,6 @@ def main():
 
     # 3. Drop ID / index-like columns that should not be used as features
     cols_to_drop = ["CustomerID"]  # known ID column
-    # Drop any "Unnamed: *" columns (often index columns from CSV)
     unnamed_cols = [c for c in df.columns if c.startswith("Unnamed")]
     cols_to_drop += unnamed_cols
 
@@ -59,20 +57,15 @@ def main():
     print("Shape after dropping cols & target:")
     print("X shape:", X.shape, "y shape:", y.shape)
 
-    # 5. Encode categorical columns
-    cat_cols = X.select_dtypes(include=["object", "category"]).columns.tolist()
-    if cat_cols:
-        print("Encoding categorical columns:", cat_cols)
-        for col in cat_cols:
-            le = LabelEncoder()
-            X[col] = le.fit_transform(X[col].astype(str))
+    # ❗ No encoding here – keep raw strings.
+    #   Categorical handling is moved into the sklearn Pipeline in train.py.
 
-    # 6. Train / test split
+    # 5. Train / test split
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, test_size=0.2, random_state=42, stratify=y
     )
 
-    # 7. Save to CSVs for training job
+    # 6. Save to CSVs for training job
     xtrain_path = os.path.join(PROCESSED_DIR, "xtrain.csv")
     xtest_path  = os.path.join(PROCESSED_DIR, "xtest.csv")
     ytrain_path = os.path.join(PROCESSED_DIR, "ytrain.csv")
