@@ -26,8 +26,8 @@ def load_model():
 
         # ------------------------------------------------------------------
         # Patch for xgboost version mismatch:
-        # some older models don't have .use_label_encoder,
-        # but newer xgboost expects it.
+        # some older models don't have .use_label_encoder or .gpu_id,
+        # but newer xgboost expects them.
         # ------------------------------------------------------------------
         try:
             from xgboost import XGBClassifier
@@ -40,11 +40,14 @@ def load_model():
             elif isinstance(model, XGBClassifier):
                 xgb_clf = model
 
-            if isinstance(xgb_clf, XGBClassifier) and not hasattr(
-                xgb_clf, "use_label_encoder"
-            ):
-                # Safe default for modern xgboost
-                xgb_clf.use_label_encoder = False
+            if isinstance(xgb_clf, XGBClassifier):
+                # attribute added/changed between versions
+                if not hasattr(xgb_clf, "use_label_encoder"):
+                    xgb_clf.use_label_encoder = False
+                # attribute introduced in newer XGBModel
+                if not hasattr(xgb_clf, "gpu_id"):
+                    # -1 or 0 are both fine for CPU usage
+                    xgb_clf.gpu_id = -1
         except Exception:
             # If anything goes wrong with the patch, don't break the app
             pass
