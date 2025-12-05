@@ -5,7 +5,7 @@ import joblib
 from huggingface_hub import hf_hub_download
 
 MODEL_REPO_ID = "bhumitps/tourism_model"
-MODEL_FILENAME = "best_tourism_model_v2.joblib"
+MODEL_FILENAME = "best_tourism_model_v3.joblib"
 
 
 @st.cache_resource
