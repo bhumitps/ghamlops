@@ -1,16 +1,11 @@
 import os
 import pandas as pd
-import numpy as np
 import joblib
 
 from sklearn.pipeline import Pipeline
 from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
-from sklearn.metrics import (
-    accuracy_score,
-    classification_report,
-    confusion_matrix,
-)
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
 import xgboost as xgb
 
 import mlflow
@@ -19,11 +14,9 @@ import mlflow.xgboost
 from huggingface_hub import HfApi, create_repo
 from huggingface_hub.utils import RepositoryNotFoundError, HfHubHTTPError
 
-
 # -----------------------------
 # CONFIG
 # -----------------------------
-# This script is run with working-directory = tourism_project
 PROCESSED_DIR = "data"
 
 XTRAIN_PATH = os.path.join(PROCESSED_DIR, "xtrain.csv")
@@ -31,18 +24,15 @@ XTEST_PATH  = os.path.join(PROCESSED_DIR, "xtest.csv")
 YTRAIN_PATH = os.path.join(PROCESSED_DIR, "ytrain.csv")
 YTEST_PATH  = os.path.join(PROCESSED_DIR, "ytest.csv")
 
-TARGET_COL = "ProdTaken"
-
 HF_TOKEN = os.getenv("HF_TOKEN")
 MODEL_REPO_ID = "bhumitps/tourism_model"
+MODEL_FILENAME = "best_tourism_model_v3.joblib"
 
 mlflow.set_tracking_uri("file:./mlruns")
 mlflow.set_experiment("tourism-mlops-experiment")
 
 if not HF_TOKEN:
-    raise ValueError(
-        "HF_TOKEN is missing or empty. Set it as a GitHub Actions secret."
-    )
+    raise ValueError("HF_TOKEN is missing or empty. Set it as a GitHub Actions secret.")
 
 
 def load_processed_data():
@@ -115,7 +105,7 @@ def get_class_weight(y_train):
 def train_and_log():
     X_train, X_test, y_train, y_test = load_processed_data()
 
-    # Split columns by type
+    # Split columns by dtype
     categorical_features = X_train.select_dtypes(include=["object", "category"]).columns.tolist()
     numeric_features = X_train.select_dtypes(exclude=["object", "category"]).columns.tolist()
 
@@ -167,7 +157,7 @@ def train_and_log():
         )
 
         # Save full pipeline (preprocess + model) for serving
-        model_path = "best_tourism_model_v2.joblib"
+        model_path = MODEL_FILENAME
         joblib.dump(model_pipeline, model_path)
         print(f"\nSaved full pipeline to {model_path}")
 
