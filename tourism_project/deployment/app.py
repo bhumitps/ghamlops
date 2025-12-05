@@ -20,9 +20,35 @@ def load_model():
             repo_id=MODEL_REPO_ID,
             filename=MODEL_FILENAME,
             repo_type="model",
-            force_download=True,       # always fetch latest v3 model
+            force_download=True,  # always fetch latest v3 model
         )
         model = joblib.load(model_path)
+
+        # ------------------------------------------------------------------
+        # Patch for xgboost version mismatch:
+        # some older models don't have .use_label_encoder,
+        # but newer xgboost expects it.
+        # ------------------------------------------------------------------
+        try:
+            from xgboost import XGBClassifier
+
+            # If it's a sklearn Pipeline, grab the final XGBClassifier
+            xgb_clf = None
+            if hasattr(model, "named_steps"):
+                # our pipeline step is named "model"
+                xgb_clf = model.named_steps.get("model", None)
+            elif isinstance(model, XGBClassifier):
+                xgb_clf = model
+
+            if isinstance(xgb_clf, XGBClassifier) and not hasattr(
+                xgb_clf, "use_label_encoder"
+            ):
+                # Safe default for modern xgboost
+                xgb_clf.use_label_encoder = False
+        except Exception:
+            # If anything goes wrong with the patch, don't break the app
+            pass
+
         st.write("Model loaded successfully.")
         return model
     except Exception as e:
@@ -82,9 +108,7 @@ with col2:
     Occupation = st.selectbox(
         "Occupation", options=["Salaried", "Self Employed", "Free Lancer", "Other"]
     )
-    Gender = st.selectbox(
-        "Gender", options=["Male", "Female", "Other"]
-    )
+    Gender = st.selectbox("Gender", options=["Male", "Female", "Other"])
     ProductPitched = st.text_input("ProductPitched (raw value)", value="Basic")
     MaritalStatus = st.selectbox(
         "MaritalStatus", options=["Married", "Single", "Divorced", "Other"]
