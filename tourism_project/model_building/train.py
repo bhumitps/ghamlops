@@ -4,7 +4,8 @@ import numpy as np
 import joblib
 
 from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import StandardScaler
+from sklearn.compose import ColumnTransformer
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.metrics import (
     accuracy_score,
     classification_report,
@@ -23,7 +24,7 @@ from huggingface_hub.utils import RepositoryNotFoundError, HfHubHTTPError
 # CONFIG
 # -----------------------------
 # This script is run with working-directory = tourism_project
-PROCESSED_DIR = "data"   #
+PROCESSED_DIR = "data"
 
 XTRAIN_PATH = os.path.join(PROCESSED_DIR, "xtrain.csv")
 XTEST_PATH  = os.path.join(PROCESSED_DIR, "xtest.csv")
@@ -63,7 +64,22 @@ def load_processed_data():
     return X_train, X_test, y_train, y_test
 
 
-def build_model(class_weight=None):
+def build_model(numeric_features, categorical_features, class_weight=None):
+    """Create full preprocessing + model pipeline."""
+
+    numeric_transformer = Pipeline(
+        steps=[("scaler", StandardScaler())]
+    )
+
+    categorical_transformer = OneHotEncoder(handle_unknown="ignore")
+
+    preprocessor = ColumnTransformer(
+        transformers=[
+            ("num", numeric_transformer, numeric_features),
+            ("cat", categorical_transformer, categorical_features),
+        ]
+    )
+
     xgb_clf = xgb.XGBClassifier(
         n_estimators=300,
         max_depth=5,
@@ -77,7 +93,7 @@ def build_model(class_weight=None):
     )
 
     pipeline = Pipeline(steps=[
-        ("scaler", StandardScaler()),
+        ("preprocess", preprocessor),
         ("model", xgb_clf),
     ])
 
@@ -98,8 +114,20 @@ def get_class_weight(y_train):
 
 def train_and_log():
     X_train, X_test, y_train, y_test = load_processed_data()
+
+    # Split columns by type
+    categorical_features = X_train.select_dtypes(include=["object", "category"]).columns.tolist()
+    numeric_features = X_train.select_dtypes(exclude=["object", "category"]).columns.tolist()
+
+    print("Numeric features:", numeric_features)
+    print("Categorical features:", categorical_features)
+
     class_weight = get_class_weight(y_train)
-    model_pipeline = build_model(class_weight=class_weight)
+    model_pipeline = build_model(
+        numeric_features=numeric_features,
+        categorical_features=categorical_features,
+        class_weight=class_weight,
+    )
 
     with mlflow.start_run():
         mlflow.log_param("model_type", "XGBClassifier")
@@ -132,11 +160,13 @@ def train_and_log():
         mlflow.log_metric("test_tn", int(cm[0, 0]))
         mlflow.log_metric("test_fn", int(cm[1, 0]))
 
+        # Log raw XGBoost model (optional)
         mlflow.xgboost.log_model(
             xgb_model=model_pipeline.named_steps["model"],
             artifact_path="xgb_model_raw"
         )
 
+        # Save full pipeline (preprocess + model) for serving
         model_path = "best_tourism_model_v2.joblib"
         joblib.dump(model_pipeline, model_path)
         print(f"\nSaved full pipeline to {model_path}")
