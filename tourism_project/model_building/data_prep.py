@@ -1,7 +1,5 @@
 import os
 import pandas as pd
-import numpy as np
-
 from huggingface_hub import hf_hub_download
 from sklearn.model_selection import train_test_split
 
@@ -37,8 +35,8 @@ def main():
     # 2. Basic cleaning
     df = df.drop_duplicates().reset_index(drop=True)
 
-    # 3. Drop ID / index-like columns that should not be used as features
-    cols_to_drop = ["CustomerID"]  # known ID column
+    # 3. Drop ID / index-like columns that shouldn’t be features
+    cols_to_drop = ["CustomerID"]
     unnamed_cols = [c for c in df.columns if c.startswith("Unnamed")]
     cols_to_drop += unnamed_cols
 
@@ -57,8 +55,8 @@ def main():
     print("Shape after dropping cols & target:")
     print("X shape:", X.shape, "y shape:", y.shape)
 
-    # ❗ No encoding here – keep raw strings.
-    #   Categorical handling is moved into the sklearn Pipeline in train.py.
+    # ❗ NOTE: no encoding here. Categorical columns stay as strings.
+    # Encoding will be handled inside the sklearn Pipeline in train.py.
 
     # 5. Train / test split
     X_train, X_test, y_train, y_test = train_test_split(
